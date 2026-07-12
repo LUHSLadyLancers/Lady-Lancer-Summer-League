@@ -25,11 +25,16 @@
       --dark: #111827;
       --border: #d1d5db;
       --muted: #6b7280;
+
       --oreb: #15803d;
       --dreb: #1d4ed8;
       --live: #d97706;
       --dead: #4b5563;
       --opp: #b91c1c;
+
+      --one-point: #15803d;
+      --two-point: #1d4ed8;
+      --three-point: #7e22ce;
     }
 
     * {
@@ -248,6 +253,102 @@
       font-weight: 750;
     }
 
+    .player-section {
+      margin-top: 28px;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 27px;
+      font-weight: 950;
+    }
+
+    .player-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .player-card {
+      padding: 14px;
+      border-radius: 18px;
+      background: white;
+      box-shadow: 0 2px 9px rgba(0, 0, 0, 0.08);
+    }
+
+    .player-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    .player-name {
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .player-total {
+      min-width: 56px;
+      text-align: right;
+      font-size: 34px;
+      font-weight: 950;
+    }
+
+    .player-buttons {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .player-buttons button {
+      min-height: 58px;
+      border: 0;
+      border-radius: 13px;
+      color: white;
+      font-size: 19px;
+      font-weight: 900;
+    }
+
+    .player-undo {
+      background: #374151;
+    }
+
+    .player-one {
+      background: var(--one-point);
+    }
+
+    .player-two {
+      background: var(--two-point);
+    }
+
+    .player-three {
+      background: var(--three-point);
+    }
+
+    .team-points-card {
+      margin-top: 14px;
+      padding: 18px;
+      border-radius: 20px;
+      background: var(--dark);
+      color: white;
+      text-align: center;
+    }
+
+    .team-points-label {
+      font-size: 17px;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    .team-points-value {
+      display: block;
+      margin-top: 4px;
+      font-size: 58px;
+      font-weight: 950;
+      line-height: 1;
+    }
+
     .summary-actions {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -291,6 +392,29 @@
       margin-top: 4px;
       font-size: 36px;
       font-weight: 950;
+    }
+
+    .score-check {
+      margin-bottom: 18px;
+      padding: 14px;
+      border-radius: 14px;
+      font-weight: 850;
+      text-align: center;
+    }
+
+    .score-check.match {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .score-check.mismatch {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .score-check.neutral {
+      background: white;
+      color: var(--muted);
     }
 
     .table-wrap {
@@ -426,6 +550,10 @@
       .summary-grid {
         grid-template-columns: repeat(5, minmax(0, 1fr));
       }
+
+      .player-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     @media (min-width: 950px) {
@@ -459,6 +587,10 @@
         margin: 18px auto 0;
         transform: none;
       }
+
+      .player-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
     }
 
     @media (max-width: 540px) {
@@ -472,6 +604,14 @@
       .tabs {
         grid-template-columns: 1fr;
       }
+
+      .player-buttons {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+
+      .player-undo {
+        grid-column: 1 / -1;
+      }
     }
   </style>
 </head>
@@ -481,7 +621,7 @@
     <h1>Lady Lancers Game Tracker</h1>
 
     <p class="subtitle">
-      Track the current game and save completed games.
+      Track team statistics, player scoring and completed games.
     </p>
 
     <section class="game-info">
@@ -518,7 +658,7 @@
 
       <div class="actions">
         <button id="undoButton" class="action">
-          Undo last tap
+          Undo last team stat
         </button>
 
         <button id="nextQuarterButton" class="action primary">
@@ -531,6 +671,22 @@
       </div>
 
       <p id="quarterMessage" class="quarter-message"></p>
+
+      <section class="player-section">
+        <h2 class="section-title">Player Points</h2>
+
+        <div id="playerList" class="player-list"></div>
+
+        <div class="team-points-card">
+          <div class="team-points-label">
+            Player Points Total
+          </div>
+
+          <span id="teamPointsTotal" class="team-points-value">
+            0
+          </span>
+        </div>
+      </section>
     </section>
 
     <section id="summaryScreen" class="screen">
@@ -544,18 +700,49 @@
         </button>
       </div>
 
+      <div
+        id="currentScoreCheck"
+        class="score-check neutral"
+      >
+        Save the completed game to compare the player total
+        with the final score.
+      </div>
+
       <section class="summary-section">
-        <h2 class="summary-heading">First Half</h2>
+        <h2 class="summary-heading">Player Scoring</h2>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Q1</th>
+                <th>Q2</th>
+                <th>1st Half</th>
+                <th>Q3</th>
+                <th>Q4</th>
+                <th>2nd Half</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+
+            <tbody id="currentPlayerTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="summary-section">
+        <h2 class="summary-heading">First Half Team Stats</h2>
         <div id="firstHalfSummary" class="summary-grid"></div>
       </section>
 
       <section class="summary-section">
-        <h2 class="summary-heading">Second Half</h2>
+        <h2 class="summary-heading">Second Half Team Stats</h2>
         <div id="secondHalfSummary" class="summary-grid"></div>
       </section>
 
       <section class="summary-section">
-        <h2 class="summary-heading">Game Totals</h2>
+        <h2 class="summary-heading">Game Team Stats</h2>
         <div id="gameSummary" class="summary-grid"></div>
       </section>
 
@@ -595,6 +782,18 @@
   <div id="toast" class="toast">Saved</div>
 
   <script>
+    const roster = [
+      "Brailynn",
+      "Clara",
+      "Ella",
+      "Hadley",
+      "Maddie G",
+      "Maddie W",
+      "Maddox",
+      "Rhea",
+      "Savana"
+    ].sort((a, b) => a.localeCompare(b));
+
     const statDefinitions = [
       {
         key: "oreb",
@@ -638,6 +837,28 @@
       };
     }
 
+    function emptyPlayer() {
+      return {
+        quarterPoints: {
+          1: 0,
+          2: 0,
+          3: 0,
+          4: 0
+        },
+        scoringHistory: []
+      };
+    }
+
+    function emptyPlayers() {
+      const players = {};
+
+      roster.forEach((name) => {
+        players[name] = emptyPlayer();
+      });
+
+      return players;
+    }
+
     function createNewGame() {
       return {
         opponent: "",
@@ -648,8 +869,85 @@
           2: emptyQuarter(),
           3: emptyQuarter(),
           4: emptyQuarter()
-        }
+        },
+        players: emptyPlayers()
       };
+    }
+
+    function normalizePlayer(player) {
+      const normalized = player || emptyPlayer();
+
+      if (!normalized.quarterPoints) {
+        normalized.quarterPoints = {
+          1: Number(normalized.points || 0),
+          2: 0,
+          3: 0,
+          4: 0
+        };
+      }
+
+      [1, 2, 3, 4].forEach((quarter) => {
+        normalized.quarterPoints[quarter] =
+          Number(normalized.quarterPoints[quarter] || 0);
+      });
+
+      if (!Array.isArray(normalized.scoringHistory)) {
+        normalized.scoringHistory = [];
+      }
+
+      normalized.scoringHistory =
+        normalized.scoringHistory.map((entry) => {
+          if (typeof entry === "number") {
+            return {
+              quarter: 1,
+              points: entry
+            };
+          }
+
+          return {
+            quarter: Number(entry.quarter || 1),
+            points: Number(entry.points || 0)
+          };
+        });
+
+      return normalized;
+    }
+
+    function normalizeGame(game) {
+      const normalized = game || createNewGame();
+
+      if (!normalized.quarters) {
+        normalized.quarters = {
+          1: emptyQuarter(),
+          2: emptyQuarter(),
+          3: emptyQuarter(),
+          4: emptyQuarter()
+        };
+      }
+
+      [1, 2, 3, 4].forEach((quarter) => {
+        normalized.quarters[quarter] = {
+          ...emptyQuarter(),
+          ...(normalized.quarters[quarter] || {})
+        };
+      });
+
+      if (!normalized.players) {
+        normalized.players = emptyPlayers();
+      }
+
+      roster.forEach((name) => {
+        normalized.players[name] =
+          normalizePlayer(normalized.players[name]);
+      });
+
+      if (!Array.isArray(normalized.history)) {
+        normalized.history = [];
+      }
+
+      normalized.quarter = Number(normalized.quarter || 1);
+
+      return normalized;
     }
 
     function loadJSON(key, fallback) {
@@ -661,15 +959,17 @@
       }
     }
 
-    let gameState = loadJSON(
-      "ladyLancersGameTracker",
-      createNewGame()
+    let gameState = normalizeGame(
+      loadJSON(
+        "ladyLancersGameTracker",
+        createNewGame()
+      )
     );
 
     let savedGames = loadJSON(
       "ladyLancersSavedGames",
       []
-    );
+    ).map(normalizeGame);
 
     function saveCurrentGame() {
       localStorage.setItem(
@@ -691,6 +991,28 @@
           total +
           Number(game.quarters[quarter][statKey] || 0)
         );
+      }, 0);
+    }
+
+    function playerQuarterPoints(game, name, quarter) {
+      return Number(
+        game.players?.[name]?.quarterPoints?.[quarter] || 0
+      );
+    }
+
+    function playerHalfPoints(game, name, quarters) {
+      return quarters.reduce((total, quarter) => {
+        return total + playerQuarterPoints(game, name, quarter);
+      }, 0);
+    }
+
+    function playerGamePoints(game, name) {
+      return playerHalfPoints(game, name, [1, 2, 3, 4]);
+    }
+
+    function playerPointsTotal(game) {
+      return roster.reduce((total, name) => {
+        return total + playerGamePoints(game, name);
       }, 0);
     }
 
@@ -719,14 +1041,14 @@
 
       saveCurrentGame();
       render();
-      showToast("+1 saved");
+      showToast("+1 team stat saved");
     }
 
-    function undoLastTap() {
+    function undoLastTeamStat() {
       const last = gameState.history.pop();
 
       if (!last) {
-        showToast("Nothing to undo");
+        showToast("No team stat to undo");
         return;
       }
 
@@ -738,7 +1060,49 @@
 
       saveCurrentGame();
       render();
-      showToast("Last tap undone");
+      showToast("Last team stat undone");
+    }
+
+    function addPlayerPoints(playerName, points) {
+      const quarter = gameState.quarter;
+      const player = gameState.players[playerName];
+
+      player.quarterPoints[quarter] += points;
+
+      player.scoringHistory.push({
+        quarter,
+        points
+      });
+
+      saveCurrentGame();
+      render();
+
+      showToast(
+        `${playerName} +${points} in Quarter ${quarter}`
+      );
+    }
+
+    function undoPlayerScore(playerName) {
+      const player = gameState.players[playerName];
+      const lastScore = player.scoringHistory.pop();
+
+      if (!lastScore) {
+        showToast(`Nothing to undo for ${playerName}`);
+        return;
+      }
+
+      player.quarterPoints[lastScore.quarter] = Math.max(
+        0,
+        player.quarterPoints[lastScore.quarter] -
+          lastScore.points
+      );
+
+      saveCurrentGame();
+      render();
+
+      showToast(
+        `${playerName}'s last ${lastScore.points} points removed`
+      );
     }
 
     function nextQuarter() {
@@ -807,7 +1171,25 @@
         return;
       }
 
-      const completedGame = {
+      const numericOurScore = Number(ourScore);
+      const playerTotal = playerPointsTotal(gameState);
+
+      if (
+        Number.isFinite(numericOurScore) &&
+        numericOurScore !== playerTotal
+      ) {
+        const difference = numericOurScore - playerTotal;
+
+        const continueSaving = confirm(
+          `The final score entered is ${numericOurScore}, but the player points total is ${playerTotal}.\n\nDifference: ${difference > 0 ? "+" : ""}${difference}\n\nSave the game anyway?`
+        );
+
+        if (!continueSaving) {
+          return;
+        }
+      }
+
+      const completedGame = normalizeGame({
         id: Date.now(),
         opponent,
         date: gameDate,
@@ -815,8 +1197,11 @@
         opponentScore: opponentScore.trim(),
         quarters: JSON.parse(
           JSON.stringify(gameState.quarters)
+        ),
+        players: JSON.parse(
+          JSON.stringify(gameState.players)
         )
-      };
+      });
 
       savedGames.unshift(completedGame);
 
@@ -857,6 +1242,96 @@
         });
     }
 
+    function renderPlayers() {
+      const playerList =
+        document.getElementById("playerList");
+
+      playerList.innerHTML = roster
+        .map((name) => {
+          const total = playerGamePoints(gameState, name);
+          const currentQuarterPoints =
+            playerQuarterPoints(
+              gameState,
+              name,
+              gameState.quarter
+            );
+
+          return `
+            <article class="player-card">
+              <div class="player-header">
+                <div>
+                  <div class="player-name">${name}</div>
+                  <div class="saved-meta">
+                    Q${gameState.quarter}: ${currentQuarterPoints}
+                  </div>
+                </div>
+
+                <div class="player-total">${total}</div>
+              </div>
+
+              <div class="player-buttons">
+                <button
+                  class="player-undo"
+                  data-player-undo="${name}"
+                >
+                  Undo
+                </button>
+
+                <button
+                  class="player-one"
+                  data-player="${name}"
+                  data-points="1"
+                >
+                  +1
+                </button>
+
+                <button
+                  class="player-two"
+                  data-player="${name}"
+                  data-points="2"
+                >
+                  +2
+                </button>
+
+                <button
+                  class="player-three"
+                  data-player="${name}"
+                  data-points="3"
+                >
+                  +3
+                </button>
+              </div>
+            </article>
+          `;
+        })
+        .join("");
+
+      document
+        .querySelectorAll("[data-player]")
+        .forEach((button) => {
+          button.addEventListener("click", () => {
+            addPlayerPoints(
+              button.dataset.player,
+              Number(button.dataset.points)
+            );
+          });
+        });
+
+      document
+        .querySelectorAll("[data-player-undo]")
+        .forEach((button) => {
+          button.addEventListener("click", () => {
+            undoPlayerScore(
+              button.dataset.playerUndo
+            );
+          });
+        });
+
+      document.getElementById(
+        "teamPointsTotal"
+      ).textContent = playerPointsTotal(gameState);
+    }
+
     function summaryCards(game, quarters) {
       return statDefinitions
         .map((stat) => {
@@ -870,6 +1345,30 @@
                 ${periodTotal(game, stat.key, quarters)}
               </span>
             </article>
+          `;
+        })
+        .join("");
+    }
+
+    function playerScoringRows(game) {
+      return roster
+        .map((name) => {
+          const q1 = playerQuarterPoints(game, name, 1);
+          const q2 = playerQuarterPoints(game, name, 2);
+          const q3 = playerQuarterPoints(game, name, 3);
+          const q4 = playerQuarterPoints(game, name, 4);
+
+          return `
+            <tr>
+              <td>${name}</td>
+              <td>${q1}</td>
+              <td>${q2}</td>
+              <td>${q1 + q2}</td>
+              <td>${q3}</td>
+              <td>${q4}</td>
+              <td>${q3 + q4}</td>
+              <td>${q1 + q2 + q3 + q4}</td>
+            </tr>
           `;
         })
         .join("");
@@ -896,6 +1395,10 @@
 
     function renderCurrentSummary() {
       document.getElementById(
+        "currentPlayerTable"
+      ).innerHTML = playerScoringRows(gameState);
+
+      document.getElementById(
         "firstHalfSummary"
       ).innerHTML = summaryCards(gameState, [1, 2]);
 
@@ -917,18 +1420,33 @@
 
     function createReport(game) {
       const opponent = game.opponent || "Opponent";
+      const totalPoints = playerPointsTotal(game);
 
-      const score =
-        game.ourScore !== undefined
-          ? `Final Score: Lady Lancers ${game.ourScore}, ${opponent} ${game.opponentScore}`
-          : "";
+      const playerLines = roster.map((name) => {
+        const firstHalf =
+          playerHalfPoints(game, name, [1, 2]);
 
-      return [
+        const secondHalf =
+          playerHalfPoints(game, name, [3, 4]);
+
+        const total =
+          playerGamePoints(game, name);
+
+        return `${name}: 1H ${firstHalf}, 2H ${secondHalf}, Total ${total}`;
+      });
+
+      const lines = [
         `Lady Lancers vs ${opponent}`,
         game.date || "",
-        score,
+        game.ourScore !== undefined
+          ? `Final Score: Lady Lancers ${game.ourScore}, ${opponent} ${game.opponentScore}`
+          : "",
         "",
-        "FIRST HALF",
+        "PLAYER POINTS",
+        ...playerLines,
+        `Player Points Total: ${totalPoints}`,
+        "",
+        "FIRST HALF TEAM STATS",
         `OREB: ${periodTotal(game, "oreb", [1, 2])}`,
         `DREB: ${periodTotal(game, "dreb", [1, 2])}`,
         `Live TO: ${periodTotal(
@@ -947,7 +1465,7 @@
           [1, 2]
         )}`,
         "",
-        "SECOND HALF",
+        "SECOND HALF TEAM STATS",
         `OREB: ${periodTotal(game, "oreb", [3, 4])}`,
         `DREB: ${periodTotal(game, "dreb", [3, 4])}`,
         `Live TO: ${periodTotal(
@@ -966,7 +1484,7 @@
           [3, 4]
         )}`,
         "",
-        "GAME TOTALS",
+        "GAME TEAM STATS",
         `OREB: ${periodTotal(
           game,
           "oreb",
@@ -992,7 +1510,9 @@
           "opponentOreb",
           [1, 2, 3, 4]
         )}`
-      ]
+      ];
+
+      return lines
         .filter((line) => line !== "")
         .join("\n");
     }
@@ -1030,8 +1550,32 @@
 
       saveHistory();
       renderSavedGames();
-
       showToast("Game deleted");
+    }
+
+    function savedScoreCheck(game) {
+      const enteredScore = Number(game.ourScore);
+      const playerTotal = playerPointsTotal(game);
+
+      if (!Number.isFinite(enteredScore)) {
+        return "";
+      }
+
+      if (enteredScore === playerTotal) {
+        return `
+          <div class="score-check match">
+            Player total matches the final score: ${playerTotal}
+          </div>
+        `;
+      }
+
+      return `
+        <div class="score-check mismatch">
+          Final score: ${enteredScore} —
+          Player points: ${playerTotal} —
+          Difference: ${enteredScore - playerTotal}
+        </div>
+      `;
     }
 
     function renderSavedGames() {
@@ -1089,19 +1633,44 @@
                 id="details-${game.id}"
                 class="saved-details"
               >
-                <h3>First Half</h3>
+                ${savedScoreCheck(game)}
+
+                <h3>Player Scoring</h3>
+
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Player</th>
+                        <th>Q1</th>
+                        <th>Q2</th>
+                        <th>1st Half</th>
+                        <th>Q3</th>
+                        <th>Q4</th>
+                        <th>2nd Half</th>
+                        <th>Total</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      ${playerScoringRows(game)}
+                    </tbody>
+                  </table>
+                </div>
+
+                <h3>First Half Team Stats</h3>
 
                 <div class="summary-grid">
                   ${summaryCards(game, [1, 2])}
                 </div>
 
-                <h3>Second Half</h3>
+                <h3>Second Half Team Stats</h3>
 
                 <div class="summary-grid">
                   ${summaryCards(game, [3, 4])}
                 </div>
 
-                <h3>Game Totals</h3>
+                <h3>Game Team Stats</h3>
 
                 <div class="summary-grid">
                   ${summaryCards(game, [1, 2, 3, 4])}
@@ -1163,6 +1732,10 @@
         });
     }
 
+    function csvSafe(value) {
+      return `"${String(value ?? "").replaceAll('"', '""')}"`;
+    }
+
     function exportCSV() {
       if (savedGames.length === 0) {
         showToast("No saved games to export");
@@ -1171,11 +1744,20 @@
 
       const rows = [
         [
+          "Record Type",
           "Date",
           "Opponent",
           "Lady Lancers Score",
           "Opponent Score",
           "Quarter",
+          "Player",
+          "Q1 Points",
+          "Q2 Points",
+          "First Half Points",
+          "Q3 Points",
+          "Q4 Points",
+          "Second Half Points",
+          "Total Points",
           "OREB",
           "DREB",
           "Live TO",
@@ -1189,11 +1771,20 @@
           const stats = game.quarters[quarter];
 
           rows.push([
+            "Team Stats",
             game.date,
             game.opponent,
             game.ourScore,
             game.opponentScore,
             `Q${quarter}`,
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
             stats.oreb,
             stats.dreb,
             stats.liveTurnovers,
@@ -1201,16 +1792,39 @@
             stats.opponentOreb
           ]);
         });
+
+        roster.forEach((name) => {
+          const q1 = playerQuarterPoints(game, name, 1);
+          const q2 = playerQuarterPoints(game, name, 2);
+          const q3 = playerQuarterPoints(game, name, 3);
+          const q4 = playerQuarterPoints(game, name, 4);
+
+          rows.push([
+            "Player Points",
+            game.date,
+            game.opponent,
+            game.ourScore,
+            game.opponentScore,
+            "",
+            name,
+            q1,
+            q2,
+            q1 + q2,
+            q3,
+            q4,
+            q3 + q4,
+            q1 + q2 + q3 + q4,
+            "",
+            "",
+            "",
+            "",
+            ""
+          ]);
+        });
       });
 
       const csv = rows
-        .map((row) =>
-          row
-            .map((value) =>
-              `"${String(value).replaceAll('"', '""')}"`
-            )
-            .join(",")
-        )
+        .map((row) => row.map(csvSafe).join(","))
         .join("\n");
 
       const blob = new Blob([csv], {
@@ -1221,7 +1835,8 @@
       const link = document.createElement("a");
 
       link.href = url;
-      link.download = "lady-lancers-saved-games.csv";
+      link.download =
+        "lady-lancers-saved-games-player-quarter-points.csv";
 
       document.body.appendChild(link);
       link.click();
@@ -1271,6 +1886,7 @@
         `Currently tracking Quarter ${gameState.quarter}`;
 
       renderTrackingButtons();
+      renderPlayers();
       renderCurrentSummary();
       renderSavedGames();
     }
@@ -1300,7 +1916,7 @@
 
     document
       .getElementById("undoButton")
-      .addEventListener("click", undoLastTap);
+      .addEventListener("click", undoLastTeamStat);
 
     document
       .getElementById("nextQuarterButton")
